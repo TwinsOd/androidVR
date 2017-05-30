@@ -70,5 +70,10 @@
                 <category android:name="com.google.intent.category.DAYDREAM" />
             </intent-filter>
         </activity>
+        <receiver android:name=".MediaActionBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

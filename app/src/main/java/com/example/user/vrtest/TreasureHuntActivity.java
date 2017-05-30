@@ -15,7 +15,12 @@
  */
 package com.example.user.vrtest;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Bundle;
@@ -134,6 +139,9 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     private volatile int sourceId = GvrAudioEngine.INVALID_ID;
     private volatile int successSourceId = GvrAudioEngine.INVALID_ID;
 
+
+    private BroadcastReceiver mediaBroadcastReceiver;
+    public final static String BROADCAST_MEDIA_ACTION = "com.example.user.vrtest.media_servicebackbroadcast";
     /**
      * Converts a raw text file, saved as a resource, into an OpenGL ES shader.
      *
@@ -204,6 +212,16 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         // Initialize 3D audio engine.
         gvrAudioEngine = new GvrAudioEngine(this, GvrAudioEngine.RenderingMode.BINAURAL_HIGH_QUALITY);
         initBD();
+
+        ((AudioManager) getSystemService(AUDIO_SERVICE)).registerMediaButtonEventReceiver(
+                new ComponentName(getPackageName(), MediaActionBroadcastReceiver.class.getName()));
+
+        mediaBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                clickToTrigger();
+            }
+        };
     }
 
     private void initBD() {
@@ -215,12 +233,11 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // This method is called once with the initial value and again
                 // whenever data at this location is updated.
-                String value = dataSnapshot.getValue(String.class);
+                Log.d(TAG, "Value toString: " + dataSnapshot.toString());
+                Long value = dataSnapshot.getValue(Long.class);
                 Log.d(TAG, "Value is: " + value);
-                myRef.setValue("0");
-
-//                vibrator.vibrate(50);
-                clickToTrigger();
+//                clickToTrigger();
+                changeY(value);
             }
 
             @Override
@@ -258,6 +275,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     @Override
     public void onPause() {
         gvrAudioEngine.pause();
+        unregisterReceiver(mediaBroadcastReceiver);
         super.onPause();
     }
 
@@ -265,6 +283,9 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     public void onResume() {
         super.onResume();
         gvrAudioEngine.resume();
+        IntentFilter intentFilter = new IntentFilter(BROADCAST_MEDIA_ACTION);
+        // регистрируем (включаем) BroadcastReceiver
+        registerReceiver(mediaBroadcastReceiver, intentFilter);
     }
 
     @Override
@@ -627,7 +648,24 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         modelPosition[0] = posVec[0];
         modelPosition[1] = newY;
         modelPosition[2] = posVec[2];
+        Log.i(TAG, "angleY _ modelPosition[0] = " + modelPosition[0]);
+        Log.i(TAG, "angleY _ modelPosition[1] = " + modelPosition[1]);
+        Log.i(TAG, "angleY _ modelPosition[2] = " + modelPosition[2]);
 
+
+        updateModelPosition();
+    }
+
+    private void changeY(long position) {
+
+//        float angleY = (float) Math.random() * 80 - 40; // Angle in Y plane, between -40 and 40.
+//        //22.078964
+//        angleY = (float) Math.toRadians(angleY);
+//        //0.3853506
+//        float newY = (float) Math.tan(angleY) * objectDistance;
+//        //0.3853506
+
+        modelPosition[0] = position;
         updateModelPosition();
     }
 
